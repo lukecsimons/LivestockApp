@@ -2,50 +2,58 @@ import streamlit as st
 import pandas as pd
 import pyodbc
 
+@st.cache_data
+def get_animal_data() -> pd.DataFrame:
 # Initialize connection.
 # Uses st.cache_resource to only run once.
-@st.cache_resource
-def init_connection():
-    return pyodbc.connect(
-        "DRIVER={ODBC Driver 17 for SQL Server};SERVER="
-        + st.secrets["server"]
-        + ";DATABASE="
-        + st.secrets["database"]
-        + ";UID="
-        + st.secrets["username"]
-        + ";PWD="
-        + st.secrets["password"]
+    @st.cache_resource
+    def init_connection():
+        return pyodbc.connect(
+            "DRIVER={ODBC Driver 17 for SQL Server};SERVER="
+            + st.secrets["server"]
+            + ";DATABASE="
+            + st.secrets["database"]
+            + ";UID="
+            + st.secrets["username"]
+            + ";PWD="
+            + st.secrets["password"]
+        )
+
+    query = "SELECT * from animals_imp;"
+    # Perform query.
+    df = pd.read_sql(query, init_connection())
+
+    #generate and fill dataframe
+    col_names = ['Cow_Number', 'Full_Name', 'Dob', 'HerdID', 'NLIS_Tag_Number','Dam_Number','Sire_Number']
+    df_split = pd.DataFrame(df.values.tolist(), columns=col_names)
+
+    return df_split
+
+
+#define drop down in side bar
+search = st.sidebar.selectbox("Select an Animal",get_animal_data()["Full_Name"])
+
+
+search, calving = st.tabs(["Search Animals", "Animals Mating/Calving"])
+
+with search:
+    st.header('Search')
+
+    df = get_animal_data()
+
+    event = st.dataframe(
+        df,
+        use_container_width=True,
+        hide_index=True,
+        on_select="rerun",
+        selection_mode="multi-row",       
     )
 
-conn = init_connection()
-
-# Perform query.
-# Uses st.cache_data to only rerun when the query changes or after 10 min.
-# @st.cache_data(ttl=600)
-# def run_query(query):
-#     with conn.cursor() as cur:
-#         cur.execute(query)
-#         return cur.fetchall()
-
-query = "SELECT * from animals_imp;"
-# Perform query.
-df = pd.read_sql(query, conn)
-
-#generate and fill dataframe
-col_names = ['Cow_Number', 'Full_Name', 'Dob', 'HerdID', 'NLIS_Tag_Number','Dam_Number','Sire_Number']
-df_split = pd.DataFrame(df.values.tolist(), columns=col_names)
-
-#form to search for animals
-with st.form("search_form"):
-    header = st.columns([2])
-    header[0].subheader('Search')
-
-    row1 = st.columns([2])
-    animal = st.selectbox("Select an Animal",df_split["Full_Name"])
-
-    search = st.form_submit_button('Search Animals')
-
-if  search:
-    st.data_editor(df_split)
-else:    
-    st.data_editor(df_split)
+    st.header("Selected Animals")
+    people = event.selection.rows
+    filtered_df = df.iloc[people]
+    st.dataframe(
+        filtered_df,
+        use_container_width=True,
+    )
+    
