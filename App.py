@@ -29,20 +29,22 @@ def get_animal_data() -> pd.DataFrame:
 
     return df_split
 
-
 #define drop down in side bar
-search = st.sidebar.selectbox("Select an Animal",get_animal_data()["Full_Name"])
+searchBar = st.sidebar.selectbox("Select an Animal",get_animal_data()["Full_Name"],index=None,placeholder="Choose an option")
 
-
+#define tabs
 search, calving = st.tabs(["Search Animals", "Animals Mating/Calving"])
 
+#search tab
 with search:
     st.header('Search')
 
     df = get_animal_data()
+    
+    data = df[df["Full_Name"]==searchBar]
 
     event = st.dataframe(
-        df,
+        data,
         use_container_width=True,
         hide_index=True,
         on_select="rerun",
@@ -50,8 +52,8 @@ with search:
     )
 
     st.header("Selected Animals")
-    people = event.selection.rows
-    filtered_df = df.iloc[people]
+    animals = event.selection.rows
+    filtered_df = df.iloc[animals]
     st.dataframe(
         filtered_df,
         use_container_width=True,
