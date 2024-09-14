@@ -2,16 +2,6 @@ import streamlit as st
 import pandas as pd
 import pyodbc
 
-
-
-with st.form("my_form"):
-    header = st.columns([1,2,2])
-    header[0].subheader('Color')
-    header[1].subheader('Opacity')
-    header[2].subheader('Size')
-
-
-
 # Initialize connection.
 # Uses st.cache_resource to only run once.
 @st.cache_resource
@@ -41,6 +31,21 @@ query = "SELECT * from animals_imp;"
 # Perform query.
 df = pd.read_sql(query, conn)
 
+#generate and fill dataframe
 col_names = ['Cow_Number', 'Full_Name', 'Dob', 'HerdID', 'NLIS_Tag_Number','Dam_Number','Sire_Number']
 df_split = pd.DataFrame(df.values.tolist(), columns=col_names)
-df_split
+
+#form to search for animals
+with st.form("search_form"):
+    header = st.columns([2])
+    header[0].subheader('Search')
+
+    row1 = st.columns([2])
+    animal = st.selectbox("Select an Animal",df_split["Full_Name"])
+
+    search = st.form_submit_button('Search Animals')
+
+if  search:
+    st.data_editor(df_split)
+else:    
+    st.data_editor(df_split)
