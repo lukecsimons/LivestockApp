@@ -1,1 +1,1 @@
-install pyodbc
+pip install --upgrade pip
