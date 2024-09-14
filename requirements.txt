@@ -1,1 +1,1 @@
-pip install pyodbc
+pyodbc==5.1.0
